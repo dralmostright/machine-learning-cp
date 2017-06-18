@@ -1,0 +1,156 @@
+---
+title: "Practical Machine Learning Course Project"
+author: "Suman Adhikari"
+date: "June 17, 2017"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Practical Machine Learning Course Project: Peer-graded Assignment
+
+### Executive Summary:
+Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. In this project, we are using datasets (Weight Lifting Exercise Dataset) obtained from [Human Activity Recognition](http://groupware.les.inf.puc-rio.br/har) using accelerometers on the belt, forearm, arm, and dumbell of 6 participants. 
+
+Participatns were asked to perform barbell lifts correctly and incorrectly in 5 different ways. The goal of our project is to predict the manner in which they did the exercise or to investigate "how (well)" an activity was performed by the wearer. 
+
+### Data
+The data that have been used for this project was obtained from.
+
+* [Training Data](https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv)
+* [Test Data](https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv)
+
+
+### Processing and Cleaning Data
+
+#### Load libraries
+```{r, message=FALSE}
+# Load the required libraries
+library(caret)
+library(randomForest)
+library(rpart)
+library(rpart.plot)
+library(corrplot)
+```
+
+#### Load the data 
+```{r}
+# Load and Read the data
+trainData<- read.csv("/R/workspace/machine-learning-cp/pml-training.csv", sep=",", header=TRUE)
+testData<- read.csv("/R/workspace/machine-learning-cp/pml-testing.csv", sep=",", header=TRUE)
+dim(trainData)
+dim(testData)
+```
+The training data set contains 19622 observations and 160 variables, while the testing data set contains 20 observations and 160 variables. The "classe" variable in the training set is the outcome to predict.
+
+
+#### Cleaning the data
+Now in this step we will perform some operation to deal with missing values and roll out the variables which seems to meaningless to our analysis. The meaningless variables was first identified by analyzing trainData and removed, and identical removals was done on testData.
+
+```{r}
+# Rollout variables with nearly zero variance
+nzvData <- nearZeroVar(trainData)
+trainData <- trainData[, -nzvData]
+testData <- testData[, -nzvData]
+
+# Rollout variables that are almost always NA
+mostlyNA <- sapply(trainData, function(x) mean(is.na(x))) > 0.95
+trainData <- trainData[, mostlyNA==F]
+testData <- testData[, mostlyNA==F]
+```
+
+Dealing with NA values, now we will exlcude variables which done contribute in our analysis.
+```{r, results='hide'}
+# Output is hidden
+names(trainData)
+```
+From the names we can see that variables like "X", "user_name", "raw_timestamp_part_1", "raw_timestamp_part_2", "new_window" doesnot contribute to your analysis. Hence excluding variables "X" and variables containing timestamp and window in their names.
+```{r}
+# Rollout variables which do not contribute on our analysis 
+trainData <- trainData[, -(1:5)]
+testData <- testData[, -(1:5)]
+dim(trainData)
+dim(testData)
+```
+We observed that the cleaned training data set contains 19622 observations with 54 variables and testing data set contains 20 obeservations with 54 variables.
+
+
+#### Slicing and Cross Validation
+Now we will slice the cleaned data into actual traning data set comprising 70% of the of data and remaining comprising 30% of the data for validation. With successful slicing of the data we will use the validation data for cross validation.
+
+```{r}
+# Set the seed for reproducibililty
+set.seed(22519)
+inTrain <- createDataPartition(trainData$classe, p=0.70, list=F)
+actTrainData <- trainData[inTrain, ]
+actTestData <- trainData[-inTrain, ]
+```
+
+### Data Modelling
+Now we will bulit model on basis of traning data set using Random Forest model with 3-fold cross validation
+```{r}
+# Train the model using 3-fold CV
+fitControl <- trainControl(method="cv", number=3, verboseIter=F)
+
+# fit model on actTrainData
+fit <- train(classe ~ ., data=actTrainData, method="rf", trControl=fitControl)
+fit$finalModel
+```
+
+### Evaluation and Selection of Model
+With building the model now, we will use the model to predict the label (classe) in actTestData and view the confusion matrix and make comparison wih actual labels.
+```{r}
+# Using model to predict classe in validation set i.e actTestData
+predict <- predict(fit, newdata=actTestData)
+
+confMat <- confusionMatrix(actTestData$classe, predict)
+confMat
+
+# Show of out-of-sample error
+oose <- 1 - as.numeric(confMat$overall[1])
+oose
+```
+So, the estimated accuracy of the model is 99.78% and the estimated out-of-sample error is 0.22%.
+
+We can inefer that estimated accuracy of the model is 99.78% is an excellent resuolt, hence we stop trying additional algorithms and used Random Forests to predict test sets.
+
+### Predicting for Test Data Set
+Now, we apply the model to the original testing data set downloaded from the data source and write those predictions to individual files.
+```{r}
+predict <- predict(fit, newdata=testData)
+
+# Show the predicted output
+predict
+
+# convert predictions to character vector
+predict <- as.character(predict)
+
+# create function to write predictions to files
+pml_write_files <- function(x) {
+    n <- length(x)
+    for(i in 1:n) {
+        filename <- paste0("problem_id_", i, ".txt")
+        write.table(x[i], file=filename, quote=F, row.names=F, col.names=F)
+    }
+}
+
+# create prediction files to submit
+pml_write_files(predict)
+```
+
+### Appendix : Figures
+1. Correlation Matrix Visualization
+```{r, fig.width = 11, fig.height = 14}
+corrPlot <- cor(trainData[, -length(names(trainData))])
+corrplot(corrPlot, method="color")
+```
+
+2. Tree Visualization
+```{r}
+treeModel <- rpart(classe ~ ., data=trainData, method="class")
+prp(treeModel) 
+```
