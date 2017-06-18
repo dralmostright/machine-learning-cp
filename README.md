@@ -7,9 +7,9 @@ This Repository contains R code and the documentation of the final course projec
 Participatns were asked to perform barbell lifts correctly and incorrectly in 5 different ways. The goal of our project is to predict the manner in which they did the exercise or to investigate "how (well)" an activity was performed by the wearer. 
 
 ### Links To the Markdown and html file.
-1. [Repository Link]()
-2. [RMarkdown file Link]()
-3. [Compiled HTML file link]()
+1. [Repository Link](https://github.com/dralmostright/machine-learning-cp)
+2. [RMarkdown file Link](https://github.com/dralmostright/machine-learning-cp/blob/master/coursera-machine-learning-cp.rmd)
+3. [Compiled HTML file link](https://github.com/dralmostright/machine-learning-cp/blob/master/coursera-machine-learning-cp.html)
 
 The task was to predict the type of barbell lift based on data from several accelerometers.
 
