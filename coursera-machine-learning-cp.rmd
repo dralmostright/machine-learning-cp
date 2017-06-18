@@ -1,10 +1,9 @@
 ---
 title: "Practical Machine Learning Course Project"
 author: "Suman Adhikari"
-date: "June 17, 2017"
+date: "June 18, 2017"
 output:
   html_document: default
-  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -40,8 +39,8 @@ library(corrplot)
 #### Load the data 
 ```{r}
 # Load and Read the data
-trainData<- read.csv("/R/workspace/machine-learning-cp/pml-training.csv", sep=",", header=TRUE)
-testData<- read.csv("/R/workspace/machine-learning-cp/pml-testing.csv", sep=",", header=TRUE)
+trainData<- read.csv("/R/workspace/data-machinelearn/pml-training.csv", sep=",", header=TRUE)
+testData<- read.csv("/R/workspace/data-machinelearn/pml-testing.csv", sep=",", header=TRUE)
 dim(trainData)
 dim(testData)
 ```
